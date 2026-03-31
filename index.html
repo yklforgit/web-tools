@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线工具箱 - 实用工具集合</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        .tab-active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .tool-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        .result-box {
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <!-- 头部 -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                <span class="text-4xl">🛠️</span>
+                在线工具箱
+            </h1>
+            <p class="text-gray-500 mt-2">常用开发工具集合，无需下载，即开即用</p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <!-- 工具切换标签 -->
+        <div class="flex flex-wrap gap-2 mb-8 bg-white p-2 rounded-xl shadow-sm">
+            <button onclick="switchTab('timestamp')" id="tab-timestamp" class="tab-active px-6 py-3 rounded-lg font-medium transition-all">
+                ⏰ 时间戳转换
+            </button>
+            <button onclick="switchTab('base64')" id="tab-base64" class="px-6 py-3 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-all">
+                🔐 Base64编解码
+            </button>
+            <button onclick="switchTab('url')" id="tab-url" class="px-6 py-3 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-all">
+                🔗 URL编解码
+            </button>
+            <button onclick="switchTab('qrcode')" id="tab-qrcode" class="px-6 py-3 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-all">
+                📱 二维码生成
+            </button>
+        </div>
+
+        <!-- 工具内容区 -->
+        <div class="tool-card rounded-2xl shadow-lg p-8">
+            
+            <!-- 1. 时间戳转换工具 -->
+            <div id="tool-timestamp" class="tool-section">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    ⏰ 时间戳转换工具
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- 当前时间 -->
+                    <div class="bg-blue-50 rounded-xl p-6">
+                        <h3 class="font-semibold text-blue-800 mb-4">当前时间</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-sm text-gray-600">秒级时间戳</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="current-ts-sec" readonly 
+                                        class="flex-1 px-4 py-2 border rounded-lg bg-white font-mono text-lg">
+                                    <button onclick="copyToClipboard('current-ts-sec')" 
+                                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                        复制
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-600">毫秒级时间戳</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="current-ts-ms" readonly 
+                                        class="flex-1 px-4 py-2 border rounded-lg bg-white font-mono text-lg">
+                                    <button onclick="copyToClipboard('current-ts-ms')" 
+                                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                        复制
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-600">北京时间</label>
+                                <input type="text" id="current-time-cn" readonly 
+                                    class="w-full px-4 py-2 border rounded-lg bg-white font-mono">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 时间戳转日期 -->
+                    <div class="bg-green-50 rounded-xl p-6">
+                        <h3 class="font-semibold text-green-800 mb-4">时间戳 → 日期</h3>
+                        <div class="space-y-3">
+                            <input type="text" id="ts-input" placeholder="输入时间戳（秒或毫秒）" 
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none">
+                            <button onclick="timestampToDate()" 
+                                class="w-full py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium">
+                                转换
+                            </button>
+                            <div id="ts-result" class="hidden">
+                                <div class="bg-white rounded-lg p-4 space-y-2">
+                                    <p><span class="text-gray-600">日期时间：</span><span id="ts-result-date" class="font-mono font-semibold text-green-700"></span></p>
+                                    <p><span class="text-gray-600">ISO格式：</span><span id="ts-result-iso" class="font-mono text-sm"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 日期转时间戳 -->
+                    <div class="bg-purple-50 rounded-xl p-6 md:col-span-2">
+                        <h3 class="font-semibold text-purple-800 mb-4">日期 → 时间戳</h3>
+                        <div class="flex flex-wrap gap-3 items-end">
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="text-sm text-gray-600">选择日期时间</label>
+                                <input type="datetime-local" id="date-input" 
+                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                            </div>
+                            <button onclick="dateToTimestamp()" 
+                                class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 font-medium">
+                                转换
+                            </button>
+                        </div>
+                        <div id="date-result" class="hidden mt-4">
+                            <div class="bg-white rounded-lg p-4 flex flex-wrap gap-6">
+                                <div>
+                                    <span class="text-gray-600">秒级：</span>
+                                    <span id="date-result-sec" class="font-mono font-semibold text-purple-700"></span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">毫秒级：</span>
+                                    <span id="date-result-ms" class="font-mono font-semibold text-purple-700"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Base64 编解码 -->
+            <div id="tool-base64" class="tool-section hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">🔐 Base64 编解码</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">输入文本</label>
+                        <textarea id="base64-input" rows="4" placeholder="输入要编码或解码的文本..." 
+                            class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"></textarea>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="base64Encode()" 
+                            class="flex-1 py-3 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-medium transition">
+                            编码 (Encode)
+                        </button>
+                        <button onclick="base64Decode()" 
+                            class="flex-1 py-3 bg-teal-500 text-white rounded-xl hover:bg-teal-600 font-medium transition">
+                            解码 (Decode)
+                        </button>
+                        <button onclick="clearInput('base64')" 
+                            class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 font-medium transition">
+                            清空
+                        </button>
+                    </div>
+                    
+                    <div id="base64-result-box" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">结果</label>
+                        <div class="relative">
+                            <textarea id="base64-result" rows="4" readonly 
+                                class="w-full px-4 py-3 border rounded-xl bg-gray-50 font-mono result-box"></textarea>
+                            <button onclick="copyText('base64-result')" 
+                                class="absolute top-2 right-2 px-3 py-1 bg-gray-200 text-sm rounded-lg hover:bg-gray-300">
+                                复制
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. URL 编解码 -->
+            <div id="tool-url" class="tool-section hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">🔗 URL 编解码</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">输入文本</label>
+                        <textarea id="url-input" rows="4" placeholder="输入要编码或解码的URL或文本..." 
+                            class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-none font-mono"></textarea>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="urlEncode()" 
+                            class="flex-1 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 font-medium transition">
+                            编码 (Encode)
+                        </button>
+                        <button onclick="urlDecode()" 
+                            class="flex-1 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 font-medium transition">
+                            解码 (Decode)
+                        </button>
+                        <button onclick="clearInput('url')" 
+                            class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 font-medium transition">
+                            清空
+                        </button>
+                    </div>
+                    
+                    <div id="url-result-box" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">结果</label>
+                        <div class="relative">
+                            <textarea id="url-result" rows="4" readonly 
+                                class="w-full px-4 py-3 border rounded-xl bg-gray-50 font-mono result-box"></textarea>
+                            <button onclick="copyText('url-result')" 
+                                class="absolute top-2 right-2 px-3 py-1 bg-gray-200 text-sm rounded-lg hover:bg-gray-300">
+                                复制
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 二维码生成 -->
+            <div id="tool-qrcode" class="tool-section hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">📱 二维码生成器</h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">内容</label>
+                            <textarea id="qr-content" rows="4" placeholder="输入URL或文本内容..." 
+                                class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none"></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-600 mb-1">尺寸</label>
+                                <select id="qr-size" class="w-full px-3 py-2 border rounded-lg">
+                                    <option value="128">128 x 128</option>
+                                    <option value="200" selected>200 x 200</option>
+                                    <option value="256">256 x 256</option>
+                                    <option value="300">300 x 300</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-600 mb-1">颜色</label>
+                                <div class="flex gap-2">
+                                    <input type="color" id="qr-color" value="#000000" class="h-10 w-20">
+                                    <input type="color" id="qr-bg" value="#ffffff" class="h-10 w-20">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="generateQR()" 
+                            class="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl hover:from-pink-600 hover:to-rose-600 font-medium transition">
+                            生成二维码
+                        </button>
+                    </div>
+                    
+                    <div class="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6">
+                        <div id="qrcode" class="mb-4"></div>
+                        <p id="qr-placeholder" class="text-gray-400">二维码将显示在这里</p>
+                        <button id="qr-download" onclick="downloadQR()" 
+                            class="hidden mt-4 px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700">
+                            下载图片
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 页脚 -->
+        <footer class="mt-12 text-center text-gray-400 text-sm">
+            <p>纯前端实现，数据不会上传到服务器</p>
+        </footer>
+    </main>
+
+    <script>
+        // ========== 标签切换 ==========
+        function switchTab(tabName) {
+            // 隐藏所有工具
+            document.querySelectorAll('.tool-section').forEach(el => el.classList.add('hidden'));
+            // 显示选中的工具
+            document.getElementById('tool-' + tabName).classList.remove('hidden');
+            
+            // 更新标签样式
+            document.querySelectorAll('[id^="tab-"]').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('text-gray-600', 'hover:bg-gray-100');
+            });
+            document.getElementById('tab-' + tabName).classList.add('tab-active');
+            document.getElementById('tab-' + tabName).classList.remove('text-gray-600', 'hover:bg-gray-100');
+        }
+
+        // ========== 时间戳工具 ==========
+        function updateCurrentTime() {
+            const now = new Date();
+            const tsSec = Math.floor(now.getTime() / 1000);
+            const tsMs = now.getTime();
+            
+            document.getElementById('current-ts-sec').value = tsSec;
+            document.getElementById('current-ts-ms').value = tsMs;
+            document.getElementById('current-time-cn').value = now.toLocaleString('zh-CN');
+        }
+        
+        setInterval(updateCurrentTime, 1000);
+        updateCurrentTime();
+
+        function timestampToDate() {
+            const input = document.getElementById('ts-input').value.trim();
+            if (!input) return;
+            
+            let ts = parseInt(input);
+            // 判断是秒还是毫秒（13位是毫秒）
+            if (input.length <= 10) {
+                ts = ts * 1000;
+            }
+            
+            const date = new Date(ts);
+            if (isNaN(date.getTime())) {
+                alert('无效的时间戳');
+                return;
+            }
+            
+            document.getElementById('ts-result').classList.remove('hidden');
+            document.getElementById('ts-result-date').textContent = date.toLocaleString('zh-CN');
+            document.getElementById('ts-result-iso').textContent = date.toISOString();
+        }
+
+        function dateToTimestamp() {
+            const input = document.getElementById('date-input').value;
+            if (!input) return;
+            
+            const date = new Date(input);
+            if (isNaN(date.getTime())) {
+                alert('无效的日期');
+                return;
+            }
+            
+            document.getElementById('date-result').classList.remove('hidden');
+            document.getElementById('date-result-sec').textContent = Math.floor(date.getTime() / 1000);
+            document.getElementById('date-result-ms').textContent = date.getTime();
+        }
+
+        // ========== Base64 编解码 ==========
+        function base64Encode() {
+            const input = document.getElementById('base64-input').value;
+            if (!input) return;
+            
+            try {
+                const encoded = btoa(unescape(encodeURIComponent(input)));
+                showResult('base64', encoded);
+            } catch (e) {
+                alert('编码失败：' + e.message);
+            }
+        }
+
+        function base64Decode() {
+            const input = document.getElementById('base64-input').value.trim();
+            if (!input) return;
+            
+            try {
+                const decoded = decodeURIComponent(escape(atob(input)));
+                showResult('base64', decoded);
+            } catch (e) {
+                alert('解码失败，请检查输入是否为有效的Base64');
+            }
+        }
+
+        // ========== URL 编解码 ==========
+        function urlEncode() {
+            const input = document.getElementById('url-input').value;
+            if (!input) return;
+            
+            const encoded = encodeURIComponent(input);
+            showResult('url', encoded);
+        }
+
+        function urlDecode() {
+            const input = document.getElementById('url-input').value.trim();
+            if (!input) return;
+            
+            try {
+                const decoded = decodeURIComponent(input);
+                showResult('url', decoded);
+            } catch (e) {
+                alert('解码失败，请检查输入是否为有效的URL编码');
+            }
+        }
+
+        // ========== 二维码生成 ==========
+        let currentQR = null;
+
+        function generateQR() {
+            const content = document.getElementById('qr-content').value.trim();
+            if (!content) {
+                alert('请输入内容');
+                return;
+            }
+            
+            const size = parseInt(document.getElementById('qr-size').value);
+            const color = document.getElementById('qr-color').value;
+            const bgColor = document.getElementById('qr-bg').value;
+            
+            // 清空之前的二维码
+            document.getElementById('qrcode').innerHTML = '';
+            
+            currentQR = new QRCode(document.getElementById('qrcode'), {
+                text: content,
+                width: size,
+                height: size,
+                colorDark: color,
+                colorLight: bgColor,
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            
+            document.getElementById('qr-placeholder').classList.add('hidden');
+            document.getElementById('qr-download').classList.remove('hidden');
+        }
+
+        function downloadQR() {
+            const img = document.querySelector('#qrcode img');
+            if (img) {
+                const link = document.createElement('a');
+                link.download = 'qrcode.png';
+                link.href = img.src;
+                link.click();
+            }
+        }
+
+        // ========== 通用函数 ==========
+        function showResult(type, result) {
+            document.getElementById(type + '-result-box').classList.remove('hidden');
+            document.getElementById(type + '-result').value = result;
+        }
+
+        function clearInput(type) {
+            document.getElementById(type + '-input').value = '';
+            document.getElementById(type + '-result-box').classList.add('hidden');
+        }
+
+        function copyToClipboard(elementId) {
+            const el = document.getElementById(elementId);
+            el.select();
+            document.execCommand('copy');
+            
+            // 临时提示
+            const originalText = el.nextElementSibling.textContent;
+            el.nextElementSibling.textContent = '已复制!';
+            setTimeout(() => {
+                el.nextElementSibling.textContent = originalText;
+            }, 1000);
+        }
+
+        function copyText(elementId) {
+            const el = document.getElementById(elementId);
+            el.select();
+            document.execCommand('copy');
+            
+            const btn = el.nextElementSibling;
+            const originalText = btn.textContent;
+            btn.textContent = '已复制!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
